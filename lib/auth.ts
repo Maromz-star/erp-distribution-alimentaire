@@ -93,8 +93,6 @@ export async function authenticate(email: string, motDePasse: string) {
 // Journal des actions (audit trail)
 // ----------------------------------------------------------------------------
 
-import { Prisma } from "@prisma/client";
-
 export async function journaliser(
   utilisateurId: string,
   action: string,
@@ -103,8 +101,10 @@ export async function journaliser(
 ) {
   await db.journalAction.create({
     data: {
-  utilisateurId,
-  action,
-  cible,
-  details: details as any,
-},
+      utilisateurId,
+      action,
+      cible,
+      details: details as any,
+    },
+  });
+}
