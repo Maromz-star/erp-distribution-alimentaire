@@ -15,6 +15,7 @@ import {
   X,
   FileText,
   ClipboardList,
+  Settings,
 } from "lucide-react";
 import clsx from "clsx";
 import type { Role } from "@prisma/client";
@@ -108,6 +109,20 @@ export function Sidebar({
             >
               <Users className="h-[18px] w-[18px] shrink-0" />
               Utilisateurs
+            </Link>
+
+            <Link
+              href="/parametres"
+              onClick={onFermer}
+              className={clsx(
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition",
+                pathname.startsWith("/parametres")
+                  ? "bg-brand-600 text-white"
+                  : "text-slate-300 hover:bg-navy-900 hover:text-white"
+              )}
+            >
+              <Settings className="h-[18px] w-[18px] shrink-0" />
+              Parametres
             </Link>
           )}
         </nav>
