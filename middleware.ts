@@ -15,7 +15,9 @@ export async function middleware(request: NextRequest) {
 
   const estFichierStatique =
     pathname.startsWith("/_next") ||
-    pathname === "/favicon.ico";
+    pathname === "/favicon.ico" ||
+    pathname === "/manifest.json" ||
+    pathname === "/icon-512.png";
 
   if (estRoutePublique || estFichierStatique) {
     return NextResponse.next();
