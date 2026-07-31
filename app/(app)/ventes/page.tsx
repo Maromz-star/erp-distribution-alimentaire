@@ -15,6 +15,7 @@ type Vente = {
   montantPaye: string;
   statut: string;
   client: { nom: string; societe: string | null };
+  bonLivraisonClient: { numeroBon: string; numeroSerie: string } | null;
 };
 
 export default function PageVentes() {
@@ -28,7 +29,7 @@ export default function PageVentes() {
     setChargement(true);
     try {
       const reponse = await apiGet<{ donnees: Vente[]; pagination: { pages: number } }>(
-        `/api/ventes?page=${page}&taille=20`
+        `/api/ventes?page=${page}`
       );
       setVentes(reponse.donnees);
       setPages(reponse.pagination.pages);
@@ -43,9 +44,14 @@ export default function PageVentes() {
 
   const colonnes: Colonne<Vente>[] = [
     { cle: "numeroFacture", entete: "Facture", rendu: (v) => <span className="font-medium">{v.numeroFacture}</span> },
-    { cle: "client", entete: "Client", rendu: (v) => v.client.nom },
-    { cle: "date", entete: "Date", rendu: (v) => formaterDate(v.creeLe) },
-    { cle: "total", entete: "Total TTC", rendu: (v) => formaterMontant(v.totalTTC), alignement: "droite" },
+    {
+      cle: "bonLivraisonClient",
+      entete: "Bon de livraison",
+      rendu: (v) => (v.bonLivraisonClient ? v.bonLivraisonClient.numeroBon : "-"),
+    },
+    { cle: "client", entete: "Client", rendu: (v) => v.client.societe || v.client.nom },
+    { cle: "creeLe", entete: "Date", rendu: (v) => formaterDate(v.creeLe) },
+    { cle: "totalTTC", entete: "Total TTC", rendu: (v) => formaterMontant(v.totalTTC), alignement: "droite" },
     {
       cle: "solde",
       entete: "Solde",
@@ -72,10 +78,10 @@ export default function PageVentes() {
     <div>
       <EnTetePage
         titre="Ventes"
-        sousTitre="Historique des factures et encaissements"
+        sousTitre="Historique des factures et encaissements - emises depuis un bon de livraison"
         actions={
-          <button onClick={() => router.push("/ventes/nouvelle")} className="bouton-principal">
-            <Plus className="h-4 w-4" /> Nouvelle vente
+          <button onClick={() => router.push("/bons-livraison-client/nouveau")} className="bouton-principal">
+            <Plus className="h-4 w-4" /> Nouveau bon de livraison
           </button>
         }
       />
@@ -88,7 +94,6 @@ export default function PageVentes() {
         pages={pages}
         onChangerPage={setPage}
         onClicLigne={(v) => router.push(`/ventes/${v.id}`)}
-        messageVide="Aucune vente. Cliquez sur 'Nouvelle vente' pour commencer."
       />
     </div>
   );
