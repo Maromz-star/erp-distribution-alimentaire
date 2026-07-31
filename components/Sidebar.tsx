@@ -13,17 +13,21 @@ import {
   Wallet,
   FileBarChart,
   X,
+  FileText,
+  ClipboardList,
 } from "lucide-react";
 import clsx from "clsx";
 import type { Role } from "@prisma/client";
 
 const LIENS = [
   { href: "/dashboard", label: "Tableau de bord", icone: LayoutDashboard, roles: ["ADMIN", "EMPLOYE", "COMMERCIAL"] },
+  { href: "/bons-livraison-client", label: "Bons de livraison client", icone: ClipboardList, roles: ["ADMIN", "EMPLOYE", "COMMERCIAL"] },
   { href: "/ventes", label: "Ventes", icone: ShoppingCart, roles: ["ADMIN", "EMPLOYE", "COMMERCIAL"] },
   { href: "/clients", label: "Clients", icone: Users, roles: ["ADMIN", "EMPLOYE", "COMMERCIAL"] },
   { href: "/produits", label: "Produits", icone: Package, roles: ["ADMIN", "EMPLOYE"] },
   { href: "/stock", label: "Stock", icone: Boxes, roles: ["ADMIN", "EMPLOYE"] },
   { href: "/livraisons", label: "Livraisons fournisseurs", icone: PackagePlus, roles: ["ADMIN", "EMPLOYE"] },
+  { href: "/factures-fournisseurs", label: "Factures fournisseurs", icone: FileText, roles: ["ADMIN", "EMPLOYE"] },
   { href: "/fournisseurs", label: "Fournisseurs", icone: Truck, roles: ["ADMIN", "EMPLOYE"] },
   { href: "/reglements", label: "Reglements & paiements", icone: Wallet, roles: ["ADMIN", "EMPLOYE", "COMMERCIAL"] },
   { href: "/rapports", label: "Rapports", icone: FileBarChart, roles: ["ADMIN", "EMPLOYE", "COMMERCIAL"] },

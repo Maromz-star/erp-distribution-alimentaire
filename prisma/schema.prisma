@@ -39,6 +39,8 @@ model User {
 
   ventes       Vente[]
   livraisons   Livraison[]
+  bonsLivraisonClient BonLivraisonClient[]
+  facturesFournisseurs FactureFournisseur[]
   reglements   Reglement[]
   paiementsF   PaiementFournisseur[]
   mouvements   MouvementStock[]
@@ -136,6 +138,8 @@ model Produit {
 
   ligneVentes      LigneVente[]
   lignesLivraison  LigneLivraison[]
+  lignesBonLivraisonClient LigneBonLivraisonClient[]
+  lignesFactureFournisseur LigneFactureFournisseur[]
   mouvements       MouvementStock[]
 
   @@index([nom])
@@ -177,6 +181,7 @@ model Fournisseur {
 
   produits    Produit[]
   livraisons  Livraison[]
+  facturesFournisseurs FactureFournisseur[]
   paiements   PaiementFournisseur[]
 
   @@map("fournisseurs")
@@ -206,6 +211,7 @@ model Client {
   creeLe      DateTime @default(now())
 
   ventes      Vente[]
+  bonsLivraisonClient BonLivraisonClient[]
   reglements  Reglement[]
 
   @@map("clients")
@@ -265,6 +271,51 @@ model LigneVente {
 }
 
 // ----------------------------------------------------------------------------
+// BONS DE LIVRAISON CLIENT (flux preparation de livraison)
+// ----------------------------------------------------------------------------
+
+enum StatutBonLivraisonClient {
+  BROUILLON
+  VALIDEE
+  ANNULEE
+}
+
+model BonLivraisonClient {
+  id            String                    @id @default(cuid())
+  numeroBon     String                    @unique
+  client        Client                    @relation(fields: [clientId], references: [id])
+  clientId      String
+  utilisateur   User                      @relation(fields: [utilisateurId], references: [id])
+  utilisateurId  String
+
+  lignes        LigneBonLivraisonClient[]
+
+  totalHT       Decimal                   @db.Decimal(12, 2) @default(0)
+  totalTTC      Decimal                   @db.Decimal(12, 2) @default(0)
+  statut        StatutBonLivraisonClient  @default(BROUILLON)
+  dateLivraison DateTime                  @default(now())
+  commentaires  String?
+  creeLe        DateTime                  @default(now())
+
+  @@index([clientId])
+  @@index([dateLivraison])
+  @@map("bons_livraison_client")
+}
+
+model LigneBonLivraisonClient {
+  id                    String                @id @default(cuid())
+  bonLivraisonClient    BonLivraisonClient    @relation(fields: [bonLivraisonClientId], references: [id], onDelete: Cascade)
+  bonLivraisonClientId  String
+  produit               Produit                @relation(fields: [produitId], references: [id])
+  produitId             String
+  quantite              Decimal               @db.Decimal(12, 3)
+  prixUnitaire          Decimal               @db.Decimal(12, 2)
+  totalLigne            Decimal               @db.Decimal(12, 2)
+
+  @@map("lignes_bon_livraison_client")
+}
+
+// ----------------------------------------------------------------------------
 // LIVRAISONS FOURNISSEURS (achats / réceptions de stock)
 // ----------------------------------------------------------------------------
 
@@ -284,6 +335,7 @@ model Livraison {
 
   lignes        LigneLivraison[]
   paiements     PaiementFournisseur[]
+  factures      FactureFournisseur[]
 
   totalHT       Decimal           @db.Decimal(12, 2) @default(0)
   totalTTC      Decimal           @db.Decimal(12, 2) @default(0)
@@ -340,6 +392,55 @@ model MouvementStock {
   @@index([produitId])
   @@index([creeLe])
   @@map("mouvements_stock")
+}
+
+// ----------------------------------------------------------------------------
+// FACTURES FOURNISSEURS (document comptable de reception fournisseur)
+// ----------------------------------------------------------------------------
+
+enum StatutFactureFournisseur {
+  EN_ATTENTE
+  PARTIELLEMENT_PAYEE
+  PAYEE
+  ANNULEE
+}
+
+model FactureFournisseur {
+  id            String                    @id @default(cuid())
+  numeroFacture String                    @unique
+  fournisseur   Fournisseur               @relation(fields: [fournisseurId], references: [id])
+  fournisseurId String
+  livraison     Livraison?                @relation(fields: [livraisonId], references: [id])
+  livraisonId   String?
+  utilisateur   User                      @relation(fields: [utilisateurId], references: [id])
+  utilisateurId String
+
+  lignes        LigneFactureFournisseur[]
+
+  totalHT       Decimal                   @db.Decimal(12, 2) @default(0)
+  totalTTC      Decimal                   @db.Decimal(12, 2) @default(0)
+  montantPaye   Decimal                   @db.Decimal(12, 2) @default(0)
+  statut        StatutFactureFournisseur @default(EN_ATTENTE)
+  dateFacture   DateTime                  @default(now())
+  commentaires  String?
+  creeLe        DateTime                  @default(now())
+
+  @@index([fournisseurId])
+  @@index([dateFacture])
+  @@map("factures_fournisseurs")
+}
+
+model LigneFactureFournisseur {
+  id                   String               @id @default(cuid())
+  factureFournisseur   FactureFournisseur   @relation(fields: [factureFournisseurId], references: [id], onDelete: Cascade)
+  factureFournisseurId String
+  produit              Produit              @relation(fields: [produitId], references: [id])
+  produitId            String
+  quantite             Decimal              @db.Decimal(12, 3)
+  prixUnitaire         Decimal              @db.Decimal(12, 2)
+  totalLigne           Decimal              @db.Decimal(12, 2)
+
+  @@map("lignes_facture_fournisseur")
 }
 
 // ----------------------------------------------------------------------------

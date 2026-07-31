@@ -25,6 +25,10 @@ export type Permission =
   | "ventes.lire"
   | "livraisons.ecrire"
   | "livraisons.lire"
+  | "bonsLivraisonClient.ecrire"
+  | "bonsLivraisonClient.lire"
+  | "facturesFournisseurs.ecrire"
+  | "facturesFournisseurs.lire"
   | "reglements.ecrire"
   | "paiementsFournisseurs.ecrire"
   | "rapports.lire";
@@ -74,6 +78,8 @@ const PERMISSIONS_PAR_ROLE: Record<Role, Permission[]> = {
     "ventes.ecrire",
     "ventes.lire",
     "livraisons.lire",
+    "bonsLivraisonClient.lire",
+    "facturesFournisseurs.lire",
     "reglements.ecrire",
     "rapports.lire",
   ],
