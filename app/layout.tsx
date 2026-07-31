@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ERP Distribution - Gestion commerciale",
   description: "Application de gestion commerciale pour entreprise de distribution alimentaire",
+    manifest: "/manifest.json",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
