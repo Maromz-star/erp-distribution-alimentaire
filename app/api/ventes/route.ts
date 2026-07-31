@@ -1,3 +1,4 @@
+import { genererNumeroFacture } from "@/lib/numerotation";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -5,7 +6,6 @@ import { routeApi, corpsJSON, pagination, utilisateurCourant } from "@/lib/api-h
 import { exigerPermission } from "@/lib/permissions";
 import { journaliser } from "@/lib/auth";
 import type { Prisma } from "@prisma/client";
-import { prochainNumero } from "@/lib/document-series";
 
 const schemaLigne = z.object({
   produitId: z.string().min(1),
@@ -191,62 +191,3 @@ export const POST = routeApi(async (request) => {
 
   return NextResponse.json({ donnees: resultat }, { status: 201 });
 });
-
-export async function POST(req: Request) {
-  const payload = await req.json();
-  const exercice = await db.exercice.findFirst({
-    where: { actif: true },
-  });
-
-  if (!exercice) {
-    return Response.json({ error: "Aucun exercice actif" }, { status: 400 });
-  }
-
-  const result = await db.$transaction(async (tx) => {
-    const vente = await tx.vente.create({
-      data: {
-        exerciceId: exercice.id,
-        clientId: payload.clientId,
-        dateVente: new Date(payload.dateVente),
-        montantHt: payload.montantHt,
-        montantTva: payload.montantTva,
-        montantTtc: payload.montantTtc,
-        statut: "VALIDEE",
-      },
-    });
-
-    const numeroBon = await prochainNumero(
-      "BON_LIVRAISON_CLIENT",
-      exercice.id
-    );
-
-    const bonLivraison = await tx.bonLivraisonClient.create({
-      data: {
-        numero: numeroBon,
-        venteId: vente.id,
-        lignes: {
-          create: payload.lignes.map((ligne: any) => ({
-            produitId: ligne.produitId,
-            quantite: ligne.quantite,
-            prixUnitaire: ligne.prixUnitaire,
-          })),
-        },
-      },
-    });
-
-    const numeroFacture = await prochainNumero("FACTURE_CLIENT", exercice.id);
-
-    const facture = await tx.factureClient.create({
-      data: {
-        numero: numeroFacture,
-        venteId: vente.id,
-        bonLivraisonId: bonLivraison.id,
-        totalTtc: payload.montantTtc,
-      },
-    });
-
-    return { vente, bonLivraison, facture };
-  });
-
-  return Response.json(result);
-}
