@@ -1,0 +1,23 @@
+# dependances
+node_modules/
+
+# next.js
+.next/
+out/
+build/
+
+# environnement
+.env
+.env.local
+
+# base de donnees locale
+*.db
+*.sqlite
+
+# uploads utilisateur (photos produits)
+public/uploads/*
+!public/uploads/.gitkeep
+
+# logs
+npm-debug.log*
+.DS_Store
