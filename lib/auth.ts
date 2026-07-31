@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { Prisma, type Role } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = Number(process.env.JWT_EXPIRES_IN ?? 86400);

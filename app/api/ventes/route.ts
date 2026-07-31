@@ -30,7 +30,7 @@ const schemaVente = z.object({
     .optional(),
 });
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   const { role } = utilisateurCourant(req);
   exigerPermission(role, "ventes.lire");
 
