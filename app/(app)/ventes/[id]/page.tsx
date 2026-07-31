@@ -21,6 +21,7 @@ type Facture = {
   commentaires: string | null;
   client: { id: string; nom: string; societe: string | null; adresse: string | null; ville: string | null; telephone: string | null };
   utilisateur: { nom: string };
+  bonLivraisonClient: { id: string; numeroBon: string; numeroSerie: string } | null;
   lignes: {
     id: string;
     quantite: string;
@@ -98,6 +99,11 @@ export default function PageFacture() {
         <div className="mb-6 flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-semibold">Facture {facture.numeroFacture}</h1>
+            {facture.bonLivraisonClient && (
+              <p className="text-xs text-slate-400">
+                Emise depuis le bon de livraison {facture.bonLivraisonClient.numeroBon} (serie {facture.bonLivraisonClient.numeroSerie})
+              </p>
+            )}
             <p className="text-sm text-slate-500">
               {formaterDate(facture.creeLe)} · Vendeur : {facture.utilisateur.nom}
             </p>
