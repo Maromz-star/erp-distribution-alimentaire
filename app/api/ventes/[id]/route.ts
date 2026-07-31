@@ -16,6 +16,7 @@ export const GET = routeApi(async (request: NextRequest, { params }: Contexte) =
       utilisateur: { select: { nom: true } },
       lignes: { include: { produit: { select: { nom: true, codeProduit: true, unite: true } } } },
       reglements: { orderBy: { dateReglement: "desc" } },
+      bonLivraisonClient: { select: { id: true, numeroBon: true, numeroSerie: true } },
     },
   });
 
