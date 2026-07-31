@@ -97,6 +97,7 @@ export function Sidebar({
           })}
 
           {role === "ADMIN" && (
+          <>
             <Link
               href="/utilisateurs"
               onClick={onFermer}
@@ -124,6 +125,7 @@ export function Sidebar({
               <Settings className="h-[18px] w-[18px] shrink-0" />
               Parametres
             </Link>
+            </>
           )}
         </nav>
       </aside>
