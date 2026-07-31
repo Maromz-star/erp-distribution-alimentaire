@@ -5,6 +5,7 @@ import { routeApi, corpsJSON, pagination, utilisateurCourant } from "@/lib/api-h
 import { exigerPermission } from "@/lib/permissions";
 import { journaliser } from "@/lib/auth";
 import type { Prisma } from "@prisma/client";
+import { prochainNumero } from "@/lib/document-series";
 
 const schemaLigne = z.object({
   produitId: z.string().min(1),
@@ -29,24 +30,16 @@ const schemaVente = z.object({
     .optional(),
 });
 
-async function genererNumeroFacture(tx: Prisma.TransactionClient): Promise<string> {
-  const annee = new Date().getFullYear();
-  const debutAnnee = new Date(annee, 0, 1);
-  const compte = await tx.vente.count({ where: { creeLe: { gte: debutAnnee } } });
-  return `FV-${annee}-${String(compte + 1).padStart(5, "0")}`;
-}
-
-// GET /api/ventes?clientId=&statut=&du=&au=&page=&taille=
-export const GET = routeApi(async (request) => {
-  const { role } = utilisateurCourant(request);
+export async function GET(req: Request) {
+  const { role } = utilisateurCourant(req);
   exigerPermission(role, "ventes.lire");
 
-  const { searchParams } = new URL(request.url);
+  const { searchParams } = new URL(req.url);
   const clientId = searchParams.get("clientId");
   const statut = searchParams.get("statut");
   const du = searchParams.get("du");
   const au = searchParams.get("au");
-  const { skip, take, page, taille } = pagination(request);
+  const { skip, take, page, taille } = pagination(req);
 
   const filtre: Prisma.VenteWhereInput = {
     AND: [
@@ -78,7 +71,7 @@ export const GET = routeApi(async (request) => {
     donnees: ventes,
     pagination: { page, taille, total, pages: Math.ceil(total / taille) },
   });
-});
+}
 
 // POST /api/ventes - créé la vente, décrémente le stock, génère la facture.
 // Tout se passe dans UNE transaction Prisma : si une seule ligne echoue
@@ -198,3 +191,62 @@ export const POST = routeApi(async (request) => {
 
   return NextResponse.json({ donnees: resultat }, { status: 201 });
 });
+
+export async function POST(req: Request) {
+  const payload = await req.json();
+  const exercice = await db.exercice.findFirst({
+    where: { actif: true },
+  });
+
+  if (!exercice) {
+    return Response.json({ error: "Aucun exercice actif" }, { status: 400 });
+  }
+
+  const result = await db.$transaction(async (tx) => {
+    const vente = await tx.vente.create({
+      data: {
+        exerciceId: exercice.id,
+        clientId: payload.clientId,
+        dateVente: new Date(payload.dateVente),
+        montantHt: payload.montantHt,
+        montantTva: payload.montantTva,
+        montantTtc: payload.montantTtc,
+        statut: "VALIDEE",
+      },
+    });
+
+    const numeroBon = await prochainNumero(
+      "BON_LIVRAISON_CLIENT",
+      exercice.id
+    );
+
+    const bonLivraison = await tx.bonLivraisonClient.create({
+      data: {
+        numero: numeroBon,
+        venteId: vente.id,
+        lignes: {
+          create: payload.lignes.map((ligne: any) => ({
+            produitId: ligne.produitId,
+            quantite: ligne.quantite,
+            prixUnitaire: ligne.prixUnitaire,
+          })),
+        },
+      },
+    });
+
+    const numeroFacture = await prochainNumero("FACTURE_CLIENT", exercice.id);
+
+    const facture = await tx.factureClient.create({
+      data: {
+        numero: numeroFacture,
+        venteId: vente.id,
+        bonLivraisonId: bonLivraison.id,
+        totalTtc: payload.montantTtc,
+      },
+    });
+
+    return { vente, bonLivraison, facture };
+  });
+
+  return Response.json(result);
+}
