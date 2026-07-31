@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import type { Role } from "@prisma/client";
+import { Prisma, type Role } from "@prisma/client";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = Number(process.env.JWT_EXPIRES_IN ?? 86400);
@@ -93,13 +93,20 @@ export async function authenticate(email: string, motDePasse: string) {
 // Journal des actions (audit trail)
 // ----------------------------------------------------------------------------
 
+import { Prisma } from "@prisma/client";
+
 export async function journaliser(
   utilisateurId: string,
   action: string,
   cible?: string,
-  details?: Record<string, unknown>
+  details?: Prisma.InputJsonValue
 ) {
   await db.journalAction.create({
-    data: { utilisateurId, action, cible, details },
+    data: {
+      utilisateurId,
+      action,
+      cible,
+      details,
+    },
   });
 }
