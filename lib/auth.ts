@@ -103,10 +103,8 @@ export async function journaliser(
 ) {
   await db.journalAction.create({
     data: {
-      utilisateurId,
-      action,
-      cible,
-      details,
-    },
-  });
-}
+  utilisateurId,
+  action,
+  cible,
+  details: details as any,
+},
