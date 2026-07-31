@@ -506,3 +506,25 @@ model PaiementFournisseur {
   @@index([fournisseurId])
   @@map("paiements_fournisseurs")
 }
+
+
+// ----------------------------------------------------------------------------
+// PARAMETRES ENTREPRISE (societe vendeuse - utilise pour l'en-tete des PDF)
+// ----------------------------------------------------------------------------
+
+model ParametreEntreprise {
+  id                String   @id @default(cuid())
+  nom               String   @default("Mon Entreprise")
+  adresse           String?
+  ville             String?
+  pays              String?  @default("Maroc")
+  telephone         String?
+  email             String?
+  ice               String?
+  identifiantFiscal String?
+  registreCommerce  String?
+  logoUrl           String?  @db.Text
+  modifieLe         DateTime @updatedAt
+
+  @@map("parametres_entreprise")
+}
