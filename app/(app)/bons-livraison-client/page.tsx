@@ -1,187 +1,90 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { apiGet, formaterMontant, formaterDate } from "@/lib/api-client";
 import { EnTetePage, StatutBadge } from "@/components/ui";
 import { DataTable, type Colonne } from "@/components/DataTable";
-import { Modal } from "@/components/Modal";
-import { formaterDate, formaterMontant } from "@/lib/api-client";
 
 type BonLivraisonClient = {
   id: string;
-  numeroBL: string;
-  client: string;
+  numeroBon: string;
+  numeroSerie: string;
   dateLivraison: string;
+  totalTTC: string;
   statut: string;
-  totalTTC: number;
+  client: { nom: string; societe: string | null };
+  vente: { id: string; numeroFacture: string } | null;
 };
-
-const ETAT_VIDE = {
-  numeroBL: "",
-  client: "",
-  dateLivraison: new Date().toISOString().slice(0, 10),
-  statut: "BROUILLON",
-  totalTTC: 0,
-};
-
-const DONNEES_INITIALES: BonLivraisonClient[] = [
-  {
-    id: "bl-001",
-    numeroBL: "BL-2026-001",
-    client: "Société M A",
-    dateLivraison: "2026-07-30",
-    statut: "VALIDEE",
-    totalTTC: 4200,
-  },
-  {
-    id: "bl-002",
-    numeroBL: "BL-2026-002",
-    client: "Boulangerie Elite",
-    dateLivraison: "2026-07-29",
-    statut: "BROUILLON",
-    totalTTC: 1860,
-  },
-];
 
 export default function PageBonsLivraisonClient() {
-  const [bons, setBons] = useState<BonLivraisonClient[]>(DONNEES_INITIALES);
-  const [modalOuvert, setModalOuvert] = useState(false);
-  const [formulaire, setFormulaire] = useState(ETAT_VIDE);
+  const router = useRouter();
+  const [bons, setBons] = useState<BonLivraisonClient[]>([]);
+  const [chargement, setChargement] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
 
-  const colonnes = useMemo<Colonne<BonLivraisonClient>[]>(
-    () => [
-      {
-        cle: "numeroBL",
-        entete: "Bon de livraison",
-        rendu: (b) => <span className="font-medium">{b.numeroBL}</span>,
+  const charger = useCallback(async () => {
+    setChargement(true);
+    try {
+      const reponse = await apiGet<{ donnees: BonLivraisonClient[]; pagination: { pages: number } }>(
+        `/api/bons-livraison-client?page=${page}`
+      );
+      setBons(reponse.donnees);
+      setPages(reponse.pagination.pages);
+    } finally {
+      setChargement(false);
+    }
+  }, [page]);
+
+  useEffect(() => {
+    charger();
+  }, [charger]);
+
+  const colonnes: Colonne<BonLivraisonClient>[] = [
+    { cle: "numeroBon", entete: "Bon de livraison", rendu: (b) => <span className="font-medium">{b.numeroBon}</span> },
+    { cle: "client", entete: "Client", rendu: (b) => b.client.societe || b.client.nom },
+    { cle: "dateLivraison", entete: "Date", rendu: (b) => formaterDate(b.dateLivraison) },
+    { cle: "totalTTC", entete: "Total TTC", rendu: (b) => formaterMontant(b.totalTTC), alignement: "droite" },
+    {
+      cle: "statut",
+      entete: "Statut",
+      rendu: (b) => {
+        if (b.statut === "FACTUREE") return <StatutBadge statut="PAYEE" texte="Facturee" />;
+        if (b.statut === "ANNULEE") return <StatutBadge statut="ANNULEE" texte="Annulee" />;
+        if (b.statut === "VALIDEE") return <StatutBadge statut="VALIDEE" texte="Validee" />;
+        return <StatutBadge statut="BROUILLON" texte="Brouillon" />;
       },
-      { cle: "client", entete: "Client", rendu: (b) => b.client },
-      { cle: "dateLivraison", entete: "Date", rendu: (b) => formaterDate(b.dateLivraison) },
-      { cle: "totalTTC", entete: "Total TTC", rendu: (b) => formaterMontant(b.totalTTC), alignement: "droite" },
-      {
-        cle: "statut",
-        entete: "Statut",
-        rendu: (b) =>
-          b.statut === "VALIDEE" ? <StatutBadge statut="VALIDEE" texte="Validé" /> : <StatutBadge statut="BROUILLON" texte="Brouillon" />,
-      },
-    ],
-    []
-  );
-
-  function ajouterBon(e: React.FormEvent) {
-    e.preventDefault();
-    const nouveauBon: BonLivraisonClient = {
-      id: `bl-${Date.now()}`,
-      numeroBL: formulaire.numeroBL,
-      client: formulaire.client,
-      dateLivraison: formulaire.dateLivraison,
-      statut: formulaire.statut,
-      totalTTC: Number(formulaire.totalTTC),
-    };
-
-    setBons((courant) => [nouveauBon, ...courant]);
-    setFormulaire(ETAT_VIDE);
-    setModalOuvert(false);
-  }
+    },
+  ];
 
   return (
     <div>
       <EnTetePage
         titre="Bons de livraison client"
-        sousTitre="Préparez les livraisons avant de lancer la facture client"
+        sousTitre="Preparez les livraisons avant de lancer la facture client"
         actions={
-          <button onClick={() => setModalOuvert(true)} className="bouton-principal">
+          <button onClick={() => router.push("/bons-livraison-client/nouveau")} className="bouton-principal">
             <Plus className="h-4 w-4" /> Nouveau bon
           </button>
         }
       />
 
       <div className="mb-4 rounded-xl border border-brand-100 bg-brand-50/70 p-4 text-sm text-brand-900 dark:border-brand-900/40 dark:bg-brand-950/30 dark:text-brand-100">
-        Ce module sert à générer le document de préparation de livraison client avant la facture. Le flux logique recommandé est : <strong>client → bon de livraison client → facture client</strong>.
+        Ce module sert a generer le document de preparation de livraison client avant la facture. Le flux logique recommande est : <strong>client -&gt; bon de livraison client -&gt; facture client</strong>.
       </div>
 
       <DataTable
         colonnes={colonnes}
         lignes={bons}
-        chargement={false}
-        page={1}
-        pages={1}
-        onChangerPage={() => {}}
-        onClicLigne={(bon) => console.log("Voir", bon.id)}
+        chargement={chargement}
+        page={page}
+        pages={pages}
+        onChangerPage={setPage}
+        onClicLigne={(b) => router.push(`/bons-livraison-client/${b.id}`)}
         messageVide="Aucun bon de livraison client pour le moment."
       />
-
-      <Modal titre="Nouveau bon de livraison client" ouvert={modalOuvert} onFermer={() => setModalOuvert(false)} largeur="max-w-xl">
-        <form onSubmit={ajouterBon} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Champ label="Numéro du bon" requis>
-              <input
-                required
-                className="champ"
-                value={formulaire.numeroBL}
-                onChange={(e) => setFormulaire({ ...formulaire, numeroBL: e.target.value })}
-              />
-            </Champ>
-            <Champ label="Client" requis>
-              <input
-                required
-                className="champ"
-                value={formulaire.client}
-                onChange={(e) => setFormulaire({ ...formulaire, client: e.target.value })}
-              />
-            </Champ>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Champ label="Date de livraison" requis>
-              <input
-                type="date"
-                required
-                className="champ"
-                value={formulaire.dateLivraison}
-                onChange={(e) => setFormulaire({ ...formulaire, dateLivraison: e.target.value })}
-              />
-            </Champ>
-            <Champ label="Statut">
-              <select className="champ" value={formulaire.statut} onChange={(e) => setFormulaire({ ...formulaire, statut: e.target.value })}>
-                <option value="BROUILLON">Brouillon</option>
-                <option value="VALIDEE">Validé</option>
-              </select>
-            </Champ>
-          </div>
-
-          <Champ label="Total TTC">
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              className="champ"
-              value={formulaire.totalTTC}
-              onChange={(e) => setFormulaire({ ...formulaire, totalTTC: Number(e.target.value) })}
-            />
-          </Champ>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setModalOuvert(false)} className="bouton-secondaire">
-              Annuler
-            </button>
-            <button type="submit" className="bouton-principal">
-              Enregistrer
-            </button>
-          </div>
-        </form>
-      </Modal>
-    </div>
-  );
-}
-
-function Champ({ label, requis, children }: { label: string; requis?: boolean; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="etiquette">
-        {label} {requis && <span className="text-danger">*</span>}
-      </label>
-      {children}
     </div>
   );
 }
