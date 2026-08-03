@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { apiGet, formaterMontant, formaterDate } from "@/lib/api-client";
+import { apiGet, formaterMontant, formaterDate, ErreurAPI } from "@/lib/api-client";
 import { EnTetePage, StatutBadge } from "@/components/ui";
 import { DataTable, type Colonne } from "@/components/DataTable";
 
@@ -18,17 +18,22 @@ type FactureFournisseur = {
 export default function PageFacturesFournisseurs() {
   const [factures, setFactures] = useState<FactureFournisseur[]>([]);
   const [chargement, setChargement] = useState(true);
+  const [erreur, setErreur] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
 
   const charger = useCallback(async () => {
     setChargement(true);
+    setErreur(null);
     try {
       const reponse = await apiGet<{ donnees: FactureFournisseur[]; pagination: { pages: number } }>(
         `/api/factures-fournisseurs?page=${page}`
       );
       setFactures(reponse.donnees);
       setPages(reponse.pagination.pages);
+    } catch (e) {
+      setFactures([]);
+      setErreur(e instanceof ErreurAPI ? e.message : "Impossible de charger les factures fournisseurs.");
     } finally {
       setChargement(false);
     }
@@ -80,6 +85,12 @@ export default function PageFacturesFournisseurs() {
           </button>
         }
       />
+
+      {erreur && (
+        <div className="mb-4 rounded-xl border border-danger/30 bg-danger/10 p-4 text-sm text-danger">
+          {erreur} Contactez votre administrateur si le probleme persiste (base de donnees a verifier).
+        </div>
+      )}
 
       <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-800 dark:bg-navy-950 dark:text-slate-200">
         Cette facture porte votre identite d'entreprise en en-tete : nom, adresse, logo, ICE, TVA. Elle permet ensuite d'aligner les livraisons fournisseurs, les paiements, et la comptabilite.
