@@ -13,6 +13,7 @@ import type { Role } from "@prisma/client";
 
 export type Permission =
   | "utilisateurs.gerer"
+    | "notifications.gerer"
   | "parametresEntreprise.gerer"
   | "produits.ecrire"
   | "produits.lire"
@@ -37,6 +38,7 @@ export type Permission =
 const PERMISSIONS_PAR_ROLE: Record<Role, Permission[]> = {
   ADMIN: [
     "utilisateurs.gerer",
+        "notifications.gerer",
     "parametresEntreprise.gerer",
     "produits.ecrire",
     "produits.lire",
