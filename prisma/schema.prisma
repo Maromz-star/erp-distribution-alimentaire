@@ -46,6 +46,8 @@ model User {
   paiementsF   PaiementFournisseur[]
   mouvements   MouvementStock[]
   journaux     JournalAction[]
+  appareils     Appareil[]
+  notificationsEnvoyees Notification[]
 
   @@map("utilisateurs")
 }
@@ -528,4 +530,85 @@ model ParametreEntreprise {
   modifieLe         DateTime @updatedAt
 
   @@map("parametres_entreprise")
+}
+
+
+// ----------------------------------------------------------------------------
+// NOTIFICATIONS PUSH (appareils mobiles, envoi et historique)
+//
+// Un Appareil correspond a une installation de l'app mobile (un token push
+// FCM). Un utilisateur peut avoir plusieurs appareils (plusieurs telephones,
+// reinstallations). Une Notification est un envoi demande par un ADMIN,
+// cible soit un utilisateur precis, soit un role, soit tout le monde ; le
+// detail par appareil (succes/echec/token invalide) est trace dans
+// EnvoiNotification pour permettre un historique fiable et le nettoyage des
+// tokens perimes.
+// ----------------------------------------------------------------------------
+
+enum PlateformeAppareil {
+  ANDROID
+  IOS
+}
+
+enum CibleNotification {
+  UTILISATEUR // cibleValeur = id de l'utilisateur
+  ROLE // cibleValeur = ADMIN | EMPLOYE | COMMERCIAL
+  TOUS // cibleValeur = null
+}
+
+enum StatutEnvoiNotification {
+  ENVOYE
+  ECHEC
+  TOKEN_INVALIDE
+}
+
+model Appareil {
+  id                 String   @id @default(cuid())
+  utilisateur        User     @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  utilisateurId      String
+  token              String   @unique
+  plateforme         PlateformeAppareil
+  actif              Boolean  @default(true)
+  derniereActiviteLe DateTime @default(now())
+  creeLe             DateTime @default(now())
+
+  envois EnvoiNotification[]
+
+  @@index([utilisateurId])
+  @@map("appareils")
+}
+
+model Notification {
+  id           String            @id @default(cuid())
+  titre        String
+  corps        String
+  donnees      Json?
+  cible        CibleNotification
+  cibleValeur  String?
+  envoyePar    User              @relation(fields: [envoyeParId], references: [id])
+  envoyeParId  String
+  totalEnvoyes Int               @default(0)
+  totalEchecs  Int               @default(0)
+  creeLe       DateTime          @default(now())
+
+  envois EnvoiNotification[]
+
+  @@index([creeLe])
+  @@map("notifications")
+}
+
+model EnvoiNotification {
+  id             String                  @id @default(cuid())
+  notification   Notification            @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  notificationId String
+  appareil       Appareil                @relation(fields: [appareilId], references: [id], onDelete: Cascade)
+  appareilId     String
+  statut         StatutEnvoiNotification
+  erreur         String?
+  creeLe         DateTime                @default(now())
+
+  @@index([notificationId])
+  @@index([appareilId])
+  @@map("envois_notifications")
+}
 }
