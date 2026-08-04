@@ -14,6 +14,8 @@ Ces commandes necessitent Node.js et, selon la plateforme, Android Studio pour A
 
 Remplacez l'icone par defaut dans android/app/src/main/res/ et ios/App/App/Assets.xcassets/. Vous pouvez utiliser l'outil cap:assets (npx @capacitor/assets generate) pour generer automatiquement toutes les tailles a partir d'une seule image source. Le nom affiche et l'identifiant appId sont deja configures dans capacitor.config.ts (com.erpdistribution.alimentaire) ; changez cet identifiant si vous avez deja reserve un autre appId sur les stores.
 
+Pour generer icone et splash automatiquement : creez un dossier assets/ a la racine du projet contenant icon.png (1024x1024, sans transparence) et splash.png (2732x2732), puis lancez npm run cap:assets (raccourci pour npx capacitor-assets generate) apres avoir fait cap add android et cap add ios. L'outil ecrit directement toutes les resolutions dans android/app/src/main/res/ et ios/App/App/Assets.xcassets/, sans autre manipulation manuelle.
+
 ## Etape 3. Tester sur un appareil ou un emulateur
 
 Utilisez npx cap open android pour ouvrir Android Studio, puis lancez Run. Utilisez npx cap open ios pour ouvrir Xcode sur Mac, puis lancez Run.
