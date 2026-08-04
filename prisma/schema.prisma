@@ -611,4 +611,3 @@ model EnvoiNotification {
   @@index([appareilId])
   @@map("envois_notifications")
 }
-}
