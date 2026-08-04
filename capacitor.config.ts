@@ -8,20 +8,33 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // IMPORTANT : remplacez server.url ci-dessous par l'URL de votre deploiement
 // Vercel si elle change (ex: domaine personnalise).
 const config: CapacitorConfig = {
-    appId: 'com.erpdistribution.alimentaire',
-    appName: 'ERP Distribution Alimentaire',
-    webDir: 'public',
-    server: {
-          url: 'https://erp-distribution-alimentaire-lime.vercel.app',
-          cleartext: false,
-          androidScheme: 'https'
-    },
-    android: {
-          allowMixedContent: false
-    },
-    ios: {
-          contentInset: 'automatic'
-    }
+      appId: 'com.erpdistribution.alimentaire',
+      appName: 'ERP Distribution Alimentaire',
+      webDir: 'public',
+      server: {
+              url: 'https://erp-distribution-alimentaire-lime.vercel.app',
+              cleartext: false,
+              androidScheme: 'https'
+      },
+      android: {
+              allowMixedContent: false
+      },
+      ios: {
+              contentInset: 'automatic'
+      },
+      plugins: {
+              SplashScreen: {
+                        launchShowDuration: 1500,
+                        launchAutoHide: true,
+                        backgroundColor: '#0f172a',
+                        showSpinner: false,
+                        androidScaleType: 'CENTER_CROP'
+              },
+              StatusBar: {
+                        style: 'DARK',
+                        backgroundColor: '#0f172a'
+              }
+      }
 };
 
 export default config;
