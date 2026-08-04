@@ -58,4 +58,3 @@ export default function OfflineBanner() {
         </div>
       );
 }
-</div>
