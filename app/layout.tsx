@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import OfflineBanner from "../components/OfflineBanner";
 
 export const metadata: Metadata = {
   title: "ERP Distribution - Gestion commerciale",
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="bg-slate-50 text-slate-900 dark:bg-navy-950 dark:text-slate-100 antialiased">
+        <OfflineBanner />
         {children}
       </body>
     </html>
